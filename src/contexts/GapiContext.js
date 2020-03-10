@@ -1,24 +1,17 @@
-import React , { Component } from 'react';
-import Navbar from './components/Navbar';
-import ChannelForm from './components/ChannelForm';
-import ChannelUploads from './components/ChannelUploads';
+import React, { createContext, Component } from 'react';
 import { gapi } from 'gapi-script';
 
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      channelId: 'UC29ju8bIPH5as8OGnQzwJyA',
-      UploadsPlayListId: '',
-      videos: [],
-      searchResults: [],
-      nextPageToken: '',
-      prevPageToken: ''
-    };
-    this.loadPage = this.loadPage.bind(this);
-    this.getId = this.getId.bind(this);
-    this.setSearchResult = this.setSearchResult.bind(this);
+export const GapiContext = createContext();
+
+class GapiContextProvider extends Component {
+  state = { 
+    channelId: 'UC29ju8bIPH5as8OGnQzwJyA',
+    UploadsPlayListId: '',
+    videos: [],
+    searchResults: [],
+    nextPageToken: '',
+    prevPageToken: ''
   }
 
   getChannelId(url){
@@ -102,7 +95,7 @@ class App extends Component {
     gapi.load("client", loadClient);
   }
 
-  loadPage(e){
+  loadPage = (e) => {
     if(e.target.id === 'next'){
       console.log(e.target.id);
       this.getUploadsPlayLisVidoes(this.state.UploadsPlayListId,'next');
@@ -110,29 +103,24 @@ class App extends Component {
       console.log(e.target.id);
       this.getUploadsPlayLisVidoes(this.state.UploadsPlayListId,'prev');
     }
-  }
+  };
 
-  getId(url){
+  getId = (url) => {
     this.getChannelId(url);
-  }
+  };
 
-  setSearchResult(searchResult){
+  setSearchResult = (searchResult) => {
     console.log(this.state);
     this.setState({searchResults:searchResult});
-  }
+  };
 
   render() { 
-    // console.log(this.state);
-    return (
-      <div className="App">
-        <Navbar videos={this.state.videos} setSearchResult={this.setSearchResult}/>
-        <ChannelForm getChannelId={this.getId}/>
-        <ChannelUploads uploadsVideos={this.state.searchResults} 
-        nextPageToken={this.state.nextPageToken} prevPageToken={this.state.prevPageToken}
-        loadPage={this.loadPage}/>
-      </div>
+    return ( 
+      <GapiContext.Provider value={{...this.state}}>
+          {this.props.children}
+      </GapiContext.Provider>
     );
   }
 }
  
-export default App;
+export default GapiContextProvider;
