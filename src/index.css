@@ -14,8 +14,25 @@ code {
 
 #uploads-pagination{
   padding-right: 50px;
+  margin-top: 10px;
+  margin-bottom: 30px;
 }
 
 #uploads-pagination button:first-child{
   margin-right: 10px;
+}
+
+#title{
+  cursor: pointer;
+  margin-left: 20%;
+}
+
+#publish-date{
+  cursor: pointer;
+}
+
+#channel-form-submit{
+  color: white;
+  outline: none;
+  cursor: pointer;
 }

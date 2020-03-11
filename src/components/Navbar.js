@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
 import './Navbar.css';
+import { NavLink } from 'react-router-dom';
+
 
 class Navbar extends Component {
   constructor(props) {
@@ -11,8 +13,13 @@ class Navbar extends Component {
   }
   
   handleSearch(e){
-    this.setState({searchValue: e.target.value.toLowerCase()});
     let searchResult = [];
+    this.setState({searchValue: e.target.value.toLowerCase()});
+    if( this.state.searchValue === '' ){
+      searchResult = this.props.videos;
+      this.props.setSearchResult(searchResult);
+      return;
+    }
     this.props.videos.map((item)=>{
       if(item.snippet.title.toLowerCase().includes(this.state.searchValue)){
         searchResult.push(item);
@@ -25,7 +32,7 @@ class Navbar extends Component {
     return ( 
       <nav className="grey darken-4 nav-wrapper">
       <div className=" container">
-        <a href="#" className="brand-logo">YouTube Channel</a>   
+        <NavLink to="/" className="brand-logo">YouTube Channel</NavLink>
           <ul className="hide-on-med-and-down right">               
               <li>    
                  <div className="center row">
@@ -42,10 +49,10 @@ class Navbar extends Component {
                       </div>
                     </div>          
                 </li> 
-                <li><a href="#" className="btn-floating black darken-4 z-depth-0">
-                  <i className="material-icons">favorite</i>
-                  </a></li>
-               <li><span className="badge white-text pink new" id="favorite-badge">5</span></li>                    
+                <li>
+                <NavLink className="btn-floating black darken-4 z-depth-0" to="/favorite"><i className="material-icons">favorite</i></NavLink>
+                 </li>
+               <li><span className="badge white-text pink new" id="favorite-badge">{this.props.favoriteVideos.length}</span></li>                    
           </ul>
       </div>
     </nav> 

@@ -1,8 +1,12 @@
 import React , { Component } from 'react';
 import Navbar from './components/Navbar';
-import ChannelForm from './components/ChannelForm';
-import ChannelUploads from './components/ChannelUploads';
 import { gapi } from 'gapi-script';
+import Home from './components/Home';
+import { BrowserRouter, Route } from 'react-router-dom';
+import Favorite from './components/Favorite';
+import Details from './components/Details';
+import { Offline, Online } from "react-detect-offline";
+
 
 
 class App extends Component {
@@ -13,12 +17,17 @@ class App extends Component {
       UploadsPlayListId: '',
       videos: [],
       searchResults: [],
+      favoriteVideos: [],
+      videoDetails: [],
       nextPageToken: '',
       prevPageToken: ''
     };
     this.loadPage = this.loadPage.bind(this);
     this.getId = this.getId.bind(this);
     this.setSearchResult = this.setSearchResult.bind(this);
+    this.componentDetails = this.componentDetails.bind(this);
+    this.addToFavorite = this.addToFavorite.bind(this);
+    this.removeFromFavorite = this.removeFromFavorite.bind(this);
   }
 
   getChannelId(url){
@@ -80,11 +89,27 @@ class App extends Component {
                   const nextPageToken = response.result.nextPageToken;
                   const prevPageToken = response.result.prevPageToken;
                   // console.log("videos", videos);
+                  localStorage.setItem('uploads', JSON.stringify(videos));
                   this.setState({videos: videos, searchResults: videos,nextPageToken: nextPageToken,prevPageToken: prevPageToken});
                   console.log(videos,nextPageToken,prevPageToken);
                 },
                 function(err) { console.error("Execute error", err); });
   }
+
+  getVideoDetails(videoId){
+    return gapi.client.youtube.videos.list({
+      "part": "snippet,contentDetails,statistics",
+      "id": videoId
+    })
+        .then((response) => {
+                // Handle the results here (response.result has the parsed body).
+                // console.log("Response", response);
+                const videoDetails = response.result.items[0];
+                this.setState({videoDetails:videoDetails});
+              },
+              function(err) { console.error("Execute error", err); });
+  }
+  
   
   componentDidMount(){
     const API_KEY = 'AIzaSyBHZhrtWL7ezQ-SkuOHakIB0V6M0qFdnKg';
@@ -102,6 +127,7 @@ class App extends Component {
     gapi.load("client", loadClient);
   }
 
+
   loadPage(e){
     if(e.target.id === 'next'){
       console.log(e.target.id);
@@ -117,20 +143,71 @@ class App extends Component {
   }
 
   setSearchResult(searchResult){
-    console.log(this.state);
     this.setState({searchResults:searchResult});
+  }
+
+  componentDetails(videoId){
+    this.getVideoDetails(videoId);
+  }
+
+  addToFavorite(videoItem){
+    let alreadyExist = false;
+    this.state.favoriteVideos.map(item=>{
+      if ( Object.values(item).indexOf(videoItem.videoId) > -1 ) {
+        alreadyExist = true;
+      }
+    });
+    if(!alreadyExist){
+      this.setState(prevState=> ({favoriteVideos: [...prevState.favoriteVideos,videoItem] }));
+    }
+  }
+  removeFromFavorite(videoItem){
+    let index = this.state.favoriteVideos.findIndex(x => x.videoId === videoItem.videoId);
+    let favoriteVideos = this.state.favoriteVideos;
+    favoriteVideos.splice(index,1);
+    console.log(favoriteVideos);
+    this.setState({favoriteVideos:[...favoriteVideos]});
   }
 
   render() { 
     // console.log(this.state);
     return (
-      <div className="App">
-        <Navbar videos={this.state.videos} setSearchResult={this.setSearchResult}/>
-        <ChannelForm getChannelId={this.getId}/>
-        <ChannelUploads uploadsVideos={this.state.searchResults} 
-        nextPageToken={this.state.nextPageToken} prevPageToken={this.state.prevPageToken}
-        loadPage={this.loadPage}/>
-      </div>
+      <BrowserRouter>
+        <div className="App">
+          <Navbar videos={this.state.videos} setSearchResult={this.setSearchResult} favoriteVideos={this.state.favoriteVideos}/>
+          <Online>
+            <Route exact path="/" render={(props)=> <Home {...props} 
+                                                    getId={this.getId}
+                                                    searchResults={this.state.searchResults}
+                                                    nextPageToken={this.state.nextPageToken}
+                                                    prevPageToken={this.state.prevPageToken}
+                                                    loadPage={this.loadPage}
+                                                    componentDetails={this.componentDetails}
+            />}/>
+          
+          </Online>
+          <Offline>
+            <h3 className="center">Offline Mode</h3>
+            {localStorage.getItem('uploads') ? 
+              <Route exact path="/" render={(props)=> <Home {...props} 
+                                                    getId={this.getId}
+                                                    searchResults={JSON.parse(localStorage.getItem('uploads'))}
+                                                    nextPageToken={this.state.nextPageToken}
+                                                    prevPageToken={this.state.prevPageToken}
+                                                    loadPage={this.loadPage}
+                                                    componentDetails={this.componentDetails}
+            />}/>
+            : null}
+          </Offline>
+          
+          <Route path="/favorite" render={(props)=> <Favorite {...props} favoriteVideos={this.state.favoriteVideos}
+            removeFromFavorite={this.removeFromFavorite}
+          />}/>
+          <Route path="/details" render={(props)=> <Details {...props} videoItem={this.state.videoDetails} 
+            addToFavorite={this.addToFavorite}
+          />}/>
+        </div>
+      </BrowserRouter>
     );
   }
 }

@@ -31,7 +31,7 @@ class ChannelForm extends Component {
                                 <label htmlFor="url-input">Enter Channel url</label>
                             </div>
                             <div className="col s2">
-                                <input type="submit" href="#" className="btn waves-effect waves-light" value="Get Videos"/>
+                                <input id="channel-form-submit" type="submit" href="#" className="btn waves-effect waves-light" value="Get Videos"/>
                             </div>
                         </div>
                     </form>
